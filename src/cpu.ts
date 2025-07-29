@@ -1,6 +1,5 @@
-import { clear } from 'console';
 import os from 'os';
-import { execCommand, sleep } from './utils';
+import { sleep } from './utils';
 
 /** Intervall in milliseconds at which CPU utilization is computed. */
 export let CPU_COMPUTE_UTILIZATION_INTERVAL = 1000;
@@ -94,33 +93,4 @@ export async function getCpuUtilization(): Promise<number> {
     await computeCpuUtilization(); // run second computation immediately to get initial values
   }
   return CPU_UTILIZATION;
-}
-
-/**
- * Returns the temeprature of the CPU in degrees Celsius (°C).
- *
- * @returns CPU temperature in degrees Celsius (°C) or null if not available.
- */
-export async function getCpuTemperature(): Promise<number | null> {
-  switch (process.platform) {
-    case 'win32': {
-      const output = await execCommand(
-        'powershell -Command "Get-CimInstance MSAcpi_ThermalZoneTemperature -Namespace "root/wmi" | Select CurrentTemperature | Format-List"',
-      ).catch(() => ''); // only successful if administrator rights are available
-      const lines = output.split('\n');
-      // tslint:disable-next-line:prefer-for-of
-      for (let i = 0; i < lines.length; i++) {
-        const [key, value] = lines[i].split(' : ').map((s) => s.trim());
-        if (key === 'CurrentTemperature') {
-          const temperature = parseInt(value, 10);
-          if (!Number.isNaN(temperature)) {
-            return (temperature - 2732) / 10; // Convert from Kelvin to Celsius
-          }
-        }
-      }
-      break;
-    }
-  }
-
-  return null;
 }

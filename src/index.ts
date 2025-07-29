@@ -1,6 +1,7 @@
 import * as cpu from './cpu';
 import * as drive from './drive';
 import * as net from './net';
+import * as temperatures from './temperature';
 import * as utils from './utils';
 
 /**
@@ -10,6 +11,7 @@ const osUtils = {
   ...cpu,
   ...drive,
   ...net,
+  ...temperatures,
   ...utils,
 };
 export default osUtils;

@@ -15,6 +15,7 @@ const osUtils = require('lup-system');
 osUtils.getCpuUtilization().then(utilization => console.log("CPU Utilization: " + utilization));
 osUtils.getDrives().then(drives => console.log("Drives: " + drives)); // Array of drive objects
 osUtils.getNetworkInterfaces().then(interfaces => console.log("Network Interfaces: " + interfaces));
+osUtils.getTemperatures().then(temps => console.log("Temperatures: " + temps));
 ```
 
 TypeScript:
@@ -25,6 +26,7 @@ import osUtils from 'lup-system';
     console.log("CPU Utilization: " + await osUtils.getCpuUtilization());
     console.log("Drives: ", await osUtils.getDrives()); // Array of drive objects
     console.log("Network Interfaces: ", await osUtils.getNetworkInterfaces());
+    console.log("Temperatures: ", await osUtils.getTemperatures());
 })();
 ```
 
@@ -70,4 +72,8 @@ Network Interfaces: [
         }
     }
 ]
+Temperatures: {
+    cpu: 45.2,
+    gpu: 60.8,
+}
 ```
