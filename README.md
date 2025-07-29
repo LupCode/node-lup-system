@@ -31,4 +31,43 @@ import osUtils from 'lup-system';
 Output:
 ```
 CPU Utilization: 45.3
+Drives: [
+    {
+        filesystem: 'C:',
+        mount: 'C:',
+        type: 'ntfs',
+        total: 1999519543296,
+        free: 479322533888,
+        used: 1520197009408,
+        utilization: 0.7602811457907099
+    },
+    {
+        filesystem: 'D:',
+        mount: 'D:',
+        type: 'ntfs',
+        total: 1000203087872,
+        free: 917103894528,
+        used: 83099193344,
+        utilization: 0.08308232033236287
+    }
+]
+Network Interfaces: [
+    {
+        name: 'Loopback Pseudo-Interface 1',
+        addresses: [ [Object], [Object] ],
+        status: { operational: 'unknown', admin: true, cable: false },
+        physical: true
+    },
+    {
+        name: 'Ethernet',
+        addresses: [],
+        status: { operational: 'up', admin: true, cable: true },
+        physical: true,
+        speed: { bits: 1000000000, bytes: 125000000 },
+        utilization: {
+        receive: 0.000003003690036900369,
+        transmit: 4.723247232472324e-7
+        }
+    }
+]
 ```
