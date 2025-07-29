@@ -151,7 +151,8 @@ async function computeNetworkUtilization() {
 async function runNetComputeInterval() {
   NET_COMPUTE_RUNNING = true;
   await computeNetworkUtilization();
-  NET_COMPUTE_TIMEOUT = setTimeout(runNetComputeInterval, Math.max(NET_COMPUTE_UTILIZATION_INTERVAL, 1));
+  if (NET_COMPUTE_RUNNING)
+    NET_COMPUTE_TIMEOUT = setTimeout(runNetComputeInterval, Math.max(NET_COMPUTE_UTILIZATION_INTERVAL, 1));
 }
 
 /**

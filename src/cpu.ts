@@ -5,7 +5,9 @@ import { execCommand, sleep } from './utils';
 /** Intervall in milliseconds at which CPU utilization is computed. */
 export let CPU_COMPUTE_UTILIZATION_INTERVAL = 1000;
 
-const PREV_CPU_CORES: os.CpuInfo[] = [];
+const CPU_COMPUTE_UTILIZATION_INITIAL_DELAY = 50;
+
+let PREV_CPU_CORES: os.CpuInfo[] = [];
 let CPU_CORE_UTILIZATIONS: number[] = [];
 let CPU_UTILIZATION: number = 0;
 let CPU_COMPUTE_RUNNING = false;
@@ -24,7 +26,7 @@ async function computeCpuUtilization() {
     const prev = PREV_CPU_CORES[i] as os.CpuInfo;
     const next = cpuCores[i] as os.CpuInfo;
 
-    const nextUsage = next.times.user + next.times.nice + next.times.sys + next.times.irq;
+    const nextUsage = (next.times.user + next.times.nice + next.times.sys + next.times.irq) * 1.0;
     const prevUsage = prev.times.user + prev.times.nice + prev.times.sys + prev.times.irq;
     const usage = nextUsage - prevUsage;
 
@@ -37,12 +39,14 @@ async function computeCpuUtilization() {
     totalTotal += total;
   }
   CPU_UTILIZATION = totalTotal !== 0 ? totalUsage / totalTotal : 0;
+  PREV_CPU_CORES = cpuCores;
 }
 
 async function runCpuComputeInterval() {
   CPU_COMPUTE_RUNNING = true;
   await computeCpuUtilization();
-  CPU_COMPUTE_TIMEOUT = setTimeout(runCpuComputeInterval, Math.max(CPU_COMPUTE_UTILIZATION_INTERVAL, 1));
+  if (CPU_COMPUTE_RUNNING)
+    CPU_COMPUTE_TIMEOUT = setTimeout(runCpuComputeInterval, Math.max(CPU_COMPUTE_UTILIZATION_INTERVAL, 1));
 }
 
 /**
@@ -72,7 +76,7 @@ export function getCpuCoreCount(): number {
 export async function getCpuCoreUtilization(): Promise<number[]> {
   if (!CPU_COMPUTE_RUNNING) {
     await runCpuComputeInterval(); // runs the first computation immediately
-    await sleep(50); // wait a bit to get initial values
+    await sleep(CPU_COMPUTE_UTILIZATION_INITIAL_DELAY); // wait a bit to get initial values
     await computeCpuUtilization(); // run second computation immediately to get initial values
   }
   return CPU_CORE_UTILIZATIONS;
@@ -86,7 +90,7 @@ export async function getCpuCoreUtilization(): Promise<number[]> {
 export async function getCpuUtilization(): Promise<number> {
   if (!CPU_COMPUTE_RUNNING) {
     await runCpuComputeInterval(); // runs the first computation immediately
-    await sleep(50); // wait a bit to get initial values
+    await sleep(CPU_COMPUTE_UTILIZATION_INITIAL_DELAY); // wait a bit to get initial values
     await computeCpuUtilization(); // run second computation immediately to get initial values
   }
   return CPU_UTILIZATION;

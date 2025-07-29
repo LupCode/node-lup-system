@@ -30,7 +30,7 @@ import osUtils from 'lup-system';
 
 Output:
 ```
-CPU Utilization: 45.3
+CPU Utilization: 0.2313135420902806
 Drives: [
     {
         filesystem: 'C:',

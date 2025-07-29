@@ -25,7 +25,7 @@ export type DriveInfo = {
   /** The total size of the drive in bytes. */
   total: number;
 
-    /** The current drive utilization as a percentage (0-1). */
+  /** The current drive utilization as a percentage (0-1). */
   utilization: number;
 };
 
@@ -53,13 +53,13 @@ export async function getDrives(includeVirtual: boolean = false): Promise<DriveI
         const used = parseInt(parts[3], 10) || 0;
         const total = parseInt(parts[2], 10) || 0;
         drives.push({
-            filesystem: parts[0] as string,
-            type,
-            total,
-            used,
-            free: parseInt(parts[4], 10) || 0,
-            utilization: total !== 0 ? used / total : 0,
-            mount: (parts[6] || parts[0]) as string,
+          filesystem: parts[0] as string,
+          type,
+          total,
+          used,
+          free: parseInt(parts[4], 10) || 0,
+          utilization: total !== 0 ? used / total : 0,
+          mount: (parts[6] || parts[0]) as string,
         });
       }
       break;
@@ -74,13 +74,13 @@ export async function getDrives(includeVirtual: boolean = false): Promise<DriveI
         const total = parseInt(drive.Size, 10) || 0;
         const free = parseInt(drive.FreeSpace, 10) || 0;
         drives.push({
-            filesystem: drive.Caption,
-            mount: drive.VolumeName || drive.Caption,
-            type: (drive.FileSystem || 'unknown').toLowerCase(),
-            total,
-            free,
-            used: total - free,
-            utilization: total !== 0 ? (total - free) / total : 0,
+          filesystem: drive.Caption,
+          mount: drive.VolumeName || drive.Caption,
+          type: (drive.FileSystem || 'unknown').toLowerCase(),
+          total,
+          free,
+          used: total - free,
+          utilization: total !== 0 ? (total - free) / total : 0,
         });
       }
       break;

@@ -6,8 +6,8 @@ test('getCpuTemperature', async () => {
 });
 
 test('getCpuUtilization', async () => {
-  const utilization = await getCpuUtilization();
-  console.log('CPU utilization:', utilization); // TODO REMOVE
+    const utilization = await getCpuUtilization();
+    console.log('CPU utilization:', utilization); // TODO REMOVE
 });
 
 afterAll(() => {
