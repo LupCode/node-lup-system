@@ -58,7 +58,7 @@ export async function getDrives(includeVirtual: boolean = false): Promise<DriveI
             total,
             used,
             free: parseInt(parts[4], 10) || 0,
-            utilization: total != 0 ? used / total : 0,
+            utilization: total !== 0 ? used / total : 0,
             mount: (parts[6] || parts[0]) as string,
         });
       }
