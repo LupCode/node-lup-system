@@ -112,7 +112,7 @@ async function computeNetworkUtilization() {
     case 'win32': {
       const output = await execCommand(
         'powershell -Command "Get-NetAdapterStatistics | Select-Object Name, ReceivedBytes, SentBytes | Format-List"',
-      );
+      ).catch(() => '');
       const lines = output.split('\n');
       const durationSec = (Date.now() - NET_LAST_COMPUTE) / 1000;
       let currNic: string | null = null;
@@ -240,60 +240,62 @@ export async function getNetworkInterfaces(): Promise<NICInfo[]> {
       const additionallyFound: string[] = []; // os.networkInterfaces() does not return all interfaces if they have the same MAC address
 
       // fetch status
-      await execCommand('powershell -Command "Get-NetAdapter | Format-List"').then((output) => {
-        const lines = output.split('\n');
-        let currNic: string | null = null;
-        // tslint:disable-next-line:prefer-for-of
-        for (let i = 0; i < lines.length; i++) {
-          const [key, value] = lines[i].split(' : ').map((part) => part.trim());
-          if (key === 'Name') {
-            currNic = value;
-          }
-          if (!currNic) continue;
-
-          if (!nics[currNic]) {
-            // if the NIC is not in the list, add it
-            nics[currNic] = {
-              name: currNic,
-              addresses: [],
-              status: {
-                operational: 'unknown',
-                admin: true, // Default to true, will be updated based on platform
-                cable: false, // Default to false, will be updated based on platform
-              },
-              physical: !currNic.startsWith('v') && !currNic.startsWith('lo'), // Assume non-loopback and non-virtual interfaces are physical
-            };
-            additionallyFound.push(currNic);
-          }
-
-          if (key.startsWith('InterfaceOperationalStat')) {
-            nics[currNic].status.operational = value.toLowerCase() as any;
-          } else if (key.startsWith('Admin')) {
-            nics[currNic].status.admin = value.toLowerCase() === 'up';
-          } else if (key.startsWith('LinkSpeed')) {
-            const speed = parseFloat(value.replace(/[^0-9.]/g, ''));
-            const bits = Math.floor(speed * 1000000000); // Convert from Gbps to bps (bits/s)
-            const bytes = Math.floor(bits / 8); // Convert from bps to Bps (bytes/s)
-            nics[currNic].speed = {
-              bits,
-              bytes, // Convert from bps to Bps (bytes/s)
-            };
-
-            // compute utilization
-            const utilization = NET_BYTES_PER_SECOND[currNic];
-            if (utilization) {
-              nics[currNic].utilization = {
-                receive: utilization.receive / bytes,
-                transmit: utilization.transmit / bytes,
-              };
+      await execCommand('powershell -Command "Get-NetAdapter | Format-List"')
+        .then((output) => {
+          const lines = output.split('\n');
+          let currNic: string | null = null;
+          // tslint:disable-next-line:prefer-for-of
+          for (let i = 0; i < lines.length; i++) {
+            const [key, value] = lines[i].split(' : ').map((part) => part.trim());
+            if (key === 'Name') {
+              currNic = value;
             }
-          } else if (key.startsWith('ConnectorPresent')) {
-            const present = value.toLowerCase() === 'true';
-            nics[currNic].status.cable = present;
-            if (present) nics[currNic].physical = true; // If a cable is present, it is a physical interface
+            if (!currNic) continue;
+
+            if (!nics[currNic]) {
+              // if the NIC is not in the list, add it
+              nics[currNic] = {
+                name: currNic,
+                addresses: [],
+                status: {
+                  operational: 'unknown',
+                  admin: true, // Default to true, will be updated based on platform
+                  cable: false, // Default to false, will be updated based on platform
+                },
+                physical: !currNic.startsWith('v') && !currNic.startsWith('lo'), // Assume non-loopback and non-virtual interfaces are physical
+              };
+              additionallyFound.push(currNic);
+            }
+
+            if (key.startsWith('InterfaceOperationalStat')) {
+              nics[currNic].status.operational = value.toLowerCase() as any;
+            } else if (key.startsWith('Admin')) {
+              nics[currNic].status.admin = value.toLowerCase() === 'up';
+            } else if (key.startsWith('LinkSpeed')) {
+              const speed = parseFloat(value.replace(/[^0-9.]/g, ''));
+              const bits = Math.floor(speed * 1000000000); // Convert from Gbps to bps (bits/s)
+              const bytes = Math.floor(bits / 8); // Convert from bps to Bps (bytes/s)
+              nics[currNic].speed = {
+                bits,
+                bytes, // Convert from bps to Bps (bytes/s)
+              };
+
+              // compute utilization
+              const utilization = NET_BYTES_PER_SECOND[currNic];
+              if (utilization) {
+                nics[currNic].utilization = {
+                  receive: utilization.receive / bytes,
+                  transmit: utilization.transmit / bytes,
+                };
+              }
+            } else if (key.startsWith('ConnectorPresent')) {
+              const present = value.toLowerCase() === 'true';
+              nics[currNic].status.cable = present;
+              if (present) nics[currNic].physical = true; // If a cable is present, it is a physical interface
+            }
           }
-        }
-      });
+        })
+        .catch(() => '');
       break;
     }
   }

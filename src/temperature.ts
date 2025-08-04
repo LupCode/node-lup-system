@@ -32,7 +32,7 @@ export type Temperatures = {
   /** Temperature of the GPU memory in degrees Celsius (°C). */
   gpuMemory?: number;
 
-  /** 
+  /**
    * Temperature of each GPU memory in degrees Celsius (°C).
    * If present contains at least one value.
    */
@@ -153,25 +153,27 @@ export async function getTemperatures(): Promise<Temperatures> {
 
   // backup nvidia-smi
   {
-    const output = await execCommand('nvidia-smi --query-gpu=temperature.gpu,temperature.memory --format=csv,nounits,noheader').catch(() => '');
+    const output = await execCommand(
+      'nvidia-smi --query-gpu=temperature.gpu,temperature.memory --format=csv,nounits,noheader',
+    ).catch(() => '');
     const lines = output.split('\n');
     let clearedGPUTemp = false;
     let clearedGPUMemoryTemp = false;
     // tslint:disable-next-line:prefer-for-of
-    for(let i = 0; i < lines.length; i++) {
-      const [tempGPU, tempMemory] = lines[i].split(',').map(s => s.trim());
+    for (let i = 0; i < lines.length; i++) {
+      const [tempGPU, tempMemory] = lines[i].split(',').map((s) => s.trim());
       const gpuTemp = parseInt(tempGPU, 10);
       const memoryTemp = parseInt(tempMemory, 10);
-      if(!Number.isNaN(gpuTemp)) {
-        if(!clearedGPUTemp) {
+      if (!Number.isNaN(gpuTemp)) {
+        if (!clearedGPUTemp) {
           temperatures.gpus = [];
           clearedGPUTemp = true;
         }
         temperatures.gpus = temperatures.gpus || [];
         temperatures.gpus.push(gpuTemp);
       }
-      if(!Number.isNaN(memoryTemp)) {
-        if(!clearedGPUMemoryTemp) {
+      if (!Number.isNaN(memoryTemp)) {
+        if (!clearedGPUMemoryTemp) {
           temperatures.gpuMemories = [];
           clearedGPUMemoryTemp = true;
         }

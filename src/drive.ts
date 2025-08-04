@@ -40,7 +40,7 @@ export async function getDrives(includeVirtual: boolean = false): Promise<DriveI
   switch (process.platform) {
     case 'darwin':
     case 'linux': {
-      const output = await execCommand('df -PT --block-size=1');
+      const output = await execCommand('df -PT --block-size=1').catch(() => '');
       const lines = output.split('\n');
       for (let i = 1; i < lines.length; i++) {
         // skip first line (header)
@@ -68,7 +68,7 @@ export async function getDrives(includeVirtual: boolean = false): Promise<DriveI
     case 'win32': {
       const output = await execCommand(
         'powershell -Command "Get-CimInstance -ClassName Win32_LogicalDisk | Select-Object Caption, VolumeName, Size, FreeSpace, FileSystem | ConvertTo-Json"',
-      );
+      ).catch(() => '');
       const json = JSON.parse(output);
       for (const drive of json) {
         const total = parseInt(drive.Size, 10) || 0;

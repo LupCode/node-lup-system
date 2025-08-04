@@ -1,19 +1,15 @@
 import os from 'os';
 import { sleep } from './utils';
 
-
 export type CPUUtilization = {
-
   /** Overall CPU utilization as a percentage (0.0-1.0). */
   overall: number;
 
   /** Utilization of each CPU core as a percentage (0.0-1.0). */
   cores: number[];
-
 };
 
 export type CPU = {
-
   /** Name of the CPU. */
   name: string;
 
@@ -33,19 +29,15 @@ export type CPU = {
   utilization: CPUUtilization;
 };
 
-
-
-
 /** Intervall in milliseconds at which CPU utilization is computed. */
 export let CPU_COMPUTE_UTILIZATION_INTERVAL = 1000;
-
 
 const CPU_COMPUTE_UTILIZATION_INITIAL_DELAY = 50;
 
 let PREV_CPU_CORES: os.CpuInfo[] = [];
 const CPU_UTILIZATION: CPUUtilization = {
   overall: 0,
-  cores: []
+  cores: [],
 };
 let CPU_COMPUTE_RUNNING = false;
 let CPU_COMPUTE_TIMEOUT: NodeJS.Timeout | null = null;
@@ -96,11 +88,9 @@ export function stopCpuUtilizationComputation() {
   CPU_COMPUTE_RUNNING = false;
 }
 
-
-
 /**
  * Returns information about the CPU.
- * 
+ *
  * @returns CPU information.
  */
 export async function getCpuInfo(): Promise<CPU> {
@@ -112,14 +102,13 @@ export async function getCpuInfo(): Promise<CPU> {
     name: cpuCores[0].model,
     speed: cpuCores[0].speed,
     utilization: await getCpuUtilization(),
-  }
+  };
 }
-
 
 /**
  * Returns the current CPU utilization.
  * If the computation is not running, it will start the computation and return the initial values.
- * 
+ *
  * @returns CPU utilization data.
  */
 export async function getCpuUtilization(): Promise<CPUUtilization> {
@@ -131,8 +120,6 @@ export async function getCpuUtilization(): Promise<CPUUtilization> {
   return CPU_UTILIZATION;
 }
 
-
-
 /**
  * Returns the number of CPU cores available on the system.
  *
@@ -141,4 +128,3 @@ export async function getCpuUtilization(): Promise<CPUUtilization> {
 export function getCpuCoreCount(): number {
   return os.cpus().length;
 }
-
