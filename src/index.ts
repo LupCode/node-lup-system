@@ -1,5 +1,6 @@
 import * as cpu from './cpu';
 import * as drive from './drive';
+import * as gpu from './gpu';
 import * as net from './net';
 import * as temperatures from './temperature';
 import * as utils from './utils';
@@ -10,6 +11,7 @@ import * as utils from './utils';
 const osUtils = {
   ...cpu,
   ...drive,
+  ...gpu,
   ...net,
   ...temperatures,
   ...utils,

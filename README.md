@@ -15,6 +15,7 @@ const osUtils = require('lup-system');
 osUtils.getCpuUtilization().then(utilization => console.log("CPU Utilization: " + utilization));
 osUtils.getDrives().then(drives => console.log("Drives: " + drives)); // Array of drive objects
 osUtils.getNetworkInterfaces().then(interfaces => console.log("Network Interfaces: " + interfaces));
+osUtils.getGPUs().then(gpus => console.log("GPU Info: " + gpus));
 osUtils.getTemperatures().then(temps => console.log("Temperatures: " + temps));
 ```
 
@@ -26,6 +27,7 @@ import osUtils from 'lup-system';
     console.log("CPU Utilization: " + await osUtils.getCpuUtilization());
     console.log("Drives: ", await osUtils.getDrives()); // Array of drive objects
     console.log("Network Interfaces: ", await osUtils.getNetworkInterfaces());
+    console.log("GPU Info: ", await osUtils.getGPUs());
     console.log("Temperatures: ", await osUtils.getTemperatures());
 })();
 ```
@@ -72,8 +74,33 @@ Network Interfaces: [
         }
     }
 ]
+GPU Info: [
+    {
+        name: 'NVIDIA GeForce RTX 3060 Ti',
+        status: 'ok',
+        id: 'PCI\\VEN_10DE&DEV_2489&SUBSYS_884F1043&REV_A1\\4&2130FF93&0&0008',
+        processor: 'NVIDIA GeForce RTX 3060 Ti',
+        memory: 8589934592,
+        driverDate: '14.05.2025 02:00:00',
+        driverVersion: '32.0.15.7652',
+        displayAttached: true,
+        displayActive: true,
+        fanSpeed: 0.53,
+        utilization: 0.03,
+        memoryUtilization: 0.01,
+        temperature: 52,
+        powerDraw: 48.32
+    }
+]
 Temperatures: {
     cpu: 45.2,
     gpu: 60.8,
 }
 ```
+
+
+## Considerations
+
+### GPU Readings
+For more detailed information on GPUs it is recommended to 
+install the [nvidia-smi](https://developer.nvidia.com/nvidia-system-management-interface) tool.

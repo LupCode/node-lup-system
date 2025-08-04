@@ -29,6 +29,15 @@ export type Temperatures = {
    */
   gpus?: number[];
 
+  /** Temperature of the GPU memory in degrees Celsius (°C). */
+  gpuMemory?: number;
+
+  /** 
+   * Temperature of each GPU memory in degrees Celsius (°C).
+   * If present contains at least one value.
+   */
+  gpuMemories?: number[];
+
   /** Temperature of the motherboard in degrees Celsius (°C). */
   motherboard?: number;
 
@@ -143,16 +152,32 @@ export async function getTemperatures(): Promise<Temperatures> {
   }
 
   // backup nvidia-smi
-  if (temperatures.gpus === undefined) {
-    const output = await execCommand('nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader').catch(() => '');
-    const lines = output.split('\n').filter((line) => line.trim() !== '');
-    if (lines.length > 0) {
-      temperatures.gpus = lines
-        .map((line) => {
-          const temp = parseInt(line.trim(), 10);
-          return !Number.isNaN(temp) ? temp : null;
-        })
-        .filter((temp) => temp !== null);
+  {
+    const output = await execCommand('nvidia-smi --query-gpu=temperature.gpu,temperature.memory --format=csv,nounits,noheader').catch(() => '');
+    const lines = output.split('\n');
+    let clearedGPUTemp = false;
+    let clearedGPUMemoryTemp = false;
+    // tslint:disable-next-line:prefer-for-of
+    for(let i = 0; i < lines.length; i++) {
+      const [tempGPU, tempMemory] = lines[i].split(',').map(s => s.trim());
+      const gpuTemp = parseInt(tempGPU, 10);
+      const memoryTemp = parseInt(tempMemory, 10);
+      if(!Number.isNaN(gpuTemp)) {
+        if(!clearedGPUTemp) {
+          temperatures.gpus = [];
+          clearedGPUTemp = true;
+        }
+        temperatures.gpus = temperatures.gpus || [];
+        temperatures.gpus.push(gpuTemp);
+      }
+      if(!Number.isNaN(memoryTemp)) {
+        if(!clearedGPUMemoryTemp) {
+          temperatures.gpuMemories = [];
+          clearedGPUMemoryTemp = true;
+        }
+        temperatures.gpuMemories = temperatures.gpuMemories || [];
+        temperatures.gpuMemories.push(memoryTemp);
+      }
     }
   }
 
@@ -166,6 +191,9 @@ export async function getTemperatures(): Promise<Temperatures> {
   }
   if (temperatures.gpu === undefined && temperatures.gpus && temperatures.gpus.length > 0) {
     temperatures.gpu = temperatures.gpus.reduce((a, b) => a + b, 0) / temperatures.gpus.length;
+  }
+  if (temperatures.gpuMemory === undefined && temperatures.gpuMemories && temperatures.gpuMemories.length > 0) {
+    temperatures.gpuMemory = temperatures.gpuMemories.reduce((a, b) => a + b, 0) / temperatures.gpuMemories.length;
   }
 
   return temperatures;

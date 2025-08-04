@@ -1,8 +1,44 @@
 import os from 'os';
 import { sleep } from './utils';
 
+
+export type CPUUtilization = {
+
+  /** Overall CPU utilization as a percentage (0.0-1.0). */
+  overall: number;
+
+  /** Utilization of each CPU core as a percentage (0.0-1.0). */
+  cores: number[];
+
+};
+
+export type CPU = {
+
+  /** Name of the CPU. */
+  name: string;
+
+  /** Number of CPU cores. */
+  coreCount: number;
+
+  /** CPU architecture (e.g., x64, arm64). */
+  architecture: string;
+
+  /** CPU model (e.g., Intel Core i7-9700K). */
+  model: string;
+
+  /** CPU speed in MHz. */
+  speed: number;
+
+  /** CPU utilization data. */
+  utilization: CPUUtilization;
+};
+
+
+
+
 /** Intervall in milliseconds at which CPU utilization is computed. */
 export let CPU_COMPUTE_UTILIZATION_INTERVAL = 1000;
+
 
 const CPU_COMPUTE_UTILIZATION_INITIAL_DELAY = 50;
 
@@ -57,6 +93,7 @@ export function stopCpuUtilizationComputation() {
   CPU_COMPUTE_TIMEOUT = null;
   CPU_COMPUTE_RUNNING = false;
 }
+
 
 /**
  * Returns the number of CPU cores available on the system.
