@@ -1,6 +1,6 @@
 {
   "name": "lup-system",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "NodeJS library to retrieve system information and utilization.",
   "files": [
     "lib/**/*"
@@ -12,7 +12,7 @@
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
-    "prepublishOnly": "npm test && npm run lint",
+    "prepublishOnly": "npm test && npm run lint && npm run build",
     "preversion": "npm run lint",
     "version": "npm run format && git add -A src",
     "postversion": "git push && git push --tags"
