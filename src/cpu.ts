@@ -23,8 +23,8 @@ export type CPU = {
   /** CPU architecture (e.g., x64, arm64). */
   architecture: string;
 
-  /** CPU model (e.g., Intel Core i7-9700K). */
-  model: string;
+  /** Endianness of the CPU (e.g., LE for little-endian, BE for big-endian). */
+  endian: 'LE' | 'BE';
 
   /** CPU speed in MHz. */
   speed: number;
@@ -43,17 +43,19 @@ export let CPU_COMPUTE_UTILIZATION_INTERVAL = 1000;
 const CPU_COMPUTE_UTILIZATION_INITIAL_DELAY = 50;
 
 let PREV_CPU_CORES: os.CpuInfo[] = [];
-let CPU_CORE_UTILIZATIONS: number[] = [];
-let CPU_UTILIZATION: number = 0;
+const CPU_UTILIZATION: CPUUtilization = {
+  overall: 0,
+  cores: []
+};
 let CPU_COMPUTE_RUNNING = false;
 let CPU_COMPUTE_TIMEOUT: NodeJS.Timeout | null = null;
 
 async function computeCpuUtilization() {
   const cpuCores = os.cpus();
   const min = Math.min(cpuCores.length, PREV_CPU_CORES.length);
-  if (CPU_CORE_UTILIZATIONS.length < min)
-    for (let i = CPU_CORE_UTILIZATIONS.length; i < min; i++) CPU_CORE_UTILIZATIONS.push(0);
-  else if (CPU_CORE_UTILIZATIONS.length > min) CPU_CORE_UTILIZATIONS = CPU_CORE_UTILIZATIONS.slice(0, min);
+  if (CPU_UTILIZATION.cores.length < min)
+    for (let i = CPU_UTILIZATION.cores.length; i < min; i++) CPU_UTILIZATION.cores.push(0);
+  else if (CPU_UTILIZATION.cores.length > min) CPU_UTILIZATION.cores = CPU_UTILIZATION.cores.slice(0, min);
 
   let totalUsage = 0;
   let totalTotal = 0;
@@ -69,11 +71,11 @@ async function computeCpuUtilization() {
     const prevTotal = prevUsage + prev.times.idle;
     const total = nextTotal - prevTotal;
 
-    CPU_CORE_UTILIZATIONS[i] = usage / total;
+    CPU_UTILIZATION.cores[i] = usage / total;
     totalUsage += usage;
     totalTotal += total;
   }
-  CPU_UTILIZATION = totalTotal !== 0 ? totalUsage / totalTotal : 0;
+  CPU_UTILIZATION.overall = totalTotal !== 0 ? totalUsage / totalTotal : 0;
   PREV_CPU_CORES = cpuCores;
 }
 
@@ -95,6 +97,42 @@ export function stopCpuUtilizationComputation() {
 }
 
 
+
+/**
+ * Returns information about the CPU.
+ * 
+ * @returns CPU information.
+ */
+export async function getCpuInfo(): Promise<CPU> {
+  const cpuCores = os.cpus();
+  return {
+    architecture: os.arch(),
+    coreCount: cpuCores.length,
+    endian: os.endianness() as 'LE' | 'BE',
+    name: cpuCores[0].model,
+    speed: cpuCores[0].speed,
+    utilization: await getCpuUtilization(),
+  }
+}
+
+
+/**
+ * Returns the current CPU utilization.
+ * If the computation is not running, it will start the computation and return the initial values.
+ * 
+ * @returns CPU utilization data.
+ */
+export async function getCpuUtilization(): Promise<CPUUtilization> {
+  if (!CPU_COMPUTE_RUNNING) {
+    await runCpuComputeInterval(); // runs the first computation immediately
+    await sleep(CPU_COMPUTE_UTILIZATION_INITIAL_DELAY); // wait a bit to get initial values
+    await computeCpuUtilization(); // run second computation immediately to get initial values
+  }
+  return CPU_UTILIZATION;
+}
+
+
+
 /**
  * Returns the number of CPU cores available on the system.
  *
@@ -104,30 +142,3 @@ export function getCpuCoreCount(): number {
   return os.cpus().length;
 }
 
-/**
- * Returns the utilization of each CPU core as a percentage (0.0-1.0).
- *
- * @returns List of CPU core utilizations as percentages (0.0-1.0).
- */
-export async function getCpuCoreUtilization(): Promise<number[]> {
-  if (!CPU_COMPUTE_RUNNING) {
-    await runCpuComputeInterval(); // runs the first computation immediately
-    await sleep(CPU_COMPUTE_UTILIZATION_INITIAL_DELAY); // wait a bit to get initial values
-    await computeCpuUtilization(); // run second computation immediately to get initial values
-  }
-  return CPU_CORE_UTILIZATIONS;
-}
-
-/**
- * Returns the overall CPU utilization as a percentage (0.0-1.0).
- *
- * @returns Overall CPU utilization as a percentage (0.0-1.0).
- */
-export async function getCpuUtilization(): Promise<number> {
-  if (!CPU_COMPUTE_RUNNING) {
-    await runCpuComputeInterval(); // runs the first computation immediately
-    await sleep(CPU_COMPUTE_UTILIZATION_INITIAL_DELAY); // wait a bit to get initial values
-    await computeCpuUtilization(); // run second computation immediately to get initial values
-  }
-  return CPU_UTILIZATION;
-}

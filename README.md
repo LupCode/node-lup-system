@@ -10,31 +10,56 @@ Node module that provides utilities for interacting with the operating system an
 
 JavaScript:
 ```javascript
-const osUtils = require('lup-system');
+const lupSystem = require('lup-system');
 
-osUtils.getCpuUtilization().then(utilization => console.log("CPU Utilization: " + utilization));
-osUtils.getDrives().then(drives => console.log("Drives: " + drives)); // Array of drive objects
-osUtils.getNetworkInterfaces().then(interfaces => console.log("Network Interfaces: " + interfaces));
-osUtils.getGPUs().then(gpus => console.log("GPU Info: " + gpus));
-osUtils.getTemperatures().then(temps => console.log("Temperatures: " + temps));
+lupSystem.getCpuInfo().then(cpuInfo => console.log("CPU Info: " + cpuInfo));
+lupSystem.getDrives().then(drives => console.log("Drives: " + drives)); // Array of drive objects
+lupSystem.getGPUs().then(gpus => console.log("GPU Info: " + gpus));
+lupSystem.getNetworkInterfaces().then(interfaces => console.log("Network Interfaces: " + interfaces));
+lupSystem.getOSInfo().then(osInfo => console.log("OS Info: " + osInfo));
+lupSystem.getTemperatures().then(temps => console.log("Temperatures: " + temps));
 ```
 
 TypeScript:
 ```typescript
-import osUtils from 'lup-system';
+import lupSystem from 'lup-system';
 
 (async () => {
-    console.log("CPU Utilization: " + await osUtils.getCpuUtilization());
-    console.log("Drives: ", await osUtils.getDrives()); // Array of drive objects
-    console.log("Network Interfaces: ", await osUtils.getNetworkInterfaces());
-    console.log("GPU Info: ", await osUtils.getGPUs());
-    console.log("Temperatures: ", await osUtils.getTemperatures());
+    console.log("CPU Info: ", await lupSystem.getCpuInfo());
+    console.log("Drives: ", await lupSystem.getDrives()); // Array of drive objects
+    console.log("GPU Info: ", await lupSystem.getGPUs());
+    console.log("Network Interfaces: ", await lupSystem.getNetworkInterfaces());
+    console.log("OS Info: ", await lupSystem.getOSInfo());
+    console.log("Temperatures: ", await lupSystem.getTemperatures());
 })();
 ```
 
 Output:
 ```
-CPU Utilization: 0.2313135420902806
+CPU Info: {
+    architecture: 'x64',
+    coreCount: 12,
+    endian: 'LE',
+    name: '11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz',
+    speed: 3912,
+    utilization: {
+        overall: 0.20021299254526093,
+        cores: [
+            0.20253164556962025,
+            0.19230769230769232,
+            0.6025641025641025,
+            0,
+            0.3974358974358974,
+            0.20253164556962025,
+            0,
+            0,
+            0.20253164556962025,
+            0,
+            0.19480519480519481,
+            0.4050632911392405
+        ]
+    }
+}
 Drives: [
     {
         filesystem: 'C:',
@@ -53,6 +78,24 @@ Drives: [
         free: 917103894528,
         used: 83099193344,
         utilization: 0.08308232033236287
+    }
+]
+GPU Info: [
+    {
+        name: 'NVIDIA GeForce RTX 3060 Ti',
+        status: 'ok',
+        id: 'PCI\\VEN_10DE&DEV_2489&SUBSYS_884F1043&REV_A1\\4&2130FF93&0&0008',
+        processor: 'NVIDIA GeForce RTX 3060 Ti',
+        memory: 8589934592,
+        driverDate: '14.05.2025 02:00:00',
+        driverVersion: '32.0.15.7652',
+        displayAttached: true,
+        displayActive: true,
+        fanSpeed: 0.53,
+        utilization: 0.03,
+        memoryUtilization: 0.01,
+        temperature: 52,
+        powerDraw: 48.32
     }
 ]
 Network Interfaces: [
@@ -74,24 +117,16 @@ Network Interfaces: [
         }
     }
 ]
-GPU Info: [
-    {
-        name: 'NVIDIA GeForce RTX 3060 Ti',
-        status: 'ok',
-        id: 'PCI\\VEN_10DE&DEV_2489&SUBSYS_884F1043&REV_A1\\4&2130FF93&0&0008',
-        processor: 'NVIDIA GeForce RTX 3060 Ti',
-        memory: 8589934592,
-        driverDate: '14.05.2025 02:00:00',
-        driverVersion: '32.0.15.7652',
-        displayAttached: true,
-        displayActive: true,
-        fanSpeed: 0.53,
-        utilization: 0.03,
-        memoryUtilization: 0.01,
-        temperature: 52,
-        powerDraw: 48.32
-    }
-]
+OS Info: {
+    name: 'Windows',
+    version: '10.0.26100',
+    architecture: 'x64',
+    machine: 'x86_64',
+    platform: 'win32',
+    bits: 64,
+    hostname: 'my-pc',
+    uptime: 2025-07-25T09:38:27.126Z
+}
 Temperatures: {
     cpu: 45.2,
     gpu: 60.8,

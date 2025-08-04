@@ -1,8 +1,8 @@
-import { getCpuUtilization, stopCpuUtilizationComputation } from '../cpu';
+import { getCpuInfo, stopCpuUtilizationComputation } from '../cpu';
 
-test('getCpuUtilization', async () => {
-  const utilization = await getCpuUtilization();
-  console.log('CPU utilization:', utilization); // TODO REMOVE
+test('getCpuInfo', async () => {
+  const cpuInfo = await getCpuInfo();
+  console.log('CPU Info:', cpuInfo); // TODO REMOVE
 });
 
 afterAll(() => {
