@@ -1,12 +1,20 @@
 {
   "name": "lup-system",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "NodeJS library to retrieve system information and utilization.",
-  "files": [
-    "lib/**/*"
-  ],
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "./lib/index",
+  "types": "./lib/index.d.ts",
+  "files": [ "lib/**/*" ],
+  "exports": {
+    ".": "./lib/index.js",
+    "./cpu": "./lib/cpu.js",
+    "./drive": "./lib/drive.js",
+    "./gpu": "./lib/gpu.js",
+    "./net": "./lib/net.js",
+    "./os": "./lib/os.js",
+    "./temperature": "./lib/temperature.js",
+    "./utils": "./lib/utils.js"
+  },
   "scripts": {
     "test": "jest --config jestconfig.json",
     "build": "tsc",

@@ -1,3 +1,11 @@
+export * from './cpu';
+export * from './drive';
+export * from './gpu';
+export * from './net';
+export * from './os';
+export * from './temperature';
+export * from './utils';
+
 import * as cpu from './cpu';
 import * as drive from './drive';
 import * as gpu from './gpu';
@@ -7,9 +15,9 @@ import * as temperatures from './temperature';
 import * as utils from './utils';
 
 /**
- * Utility functions for interacting with the operating system.
+ * Utility functions for interacting with the system.
  */
-const osUtils = {
+const lupSystem = {
   ...cpu,
   ...drive,
   ...gpu,
@@ -18,4 +26,4 @@ const osUtils = {
   ...temperatures,
   ...utils,
 };
-export default osUtils;
+export default lupSystem;
