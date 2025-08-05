@@ -1,6 +1,6 @@
-import { getMemory } from '../memory';
+import { getMemoryInfo } from '../memory';
 
-test('getMemory', async () => {
-  const memory = await getMemory();
+test('getMemoryInfo', async () => {
+  const memory = await getMemoryInfo();
   console.log(memory); // TODO REMOVE
 });

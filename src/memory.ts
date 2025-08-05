@@ -73,7 +73,7 @@ export type Memory = {
  * 
  * @returns Memory information.
  */
-export async function getMemory(): Promise<Memory> {
+export async function getMemoryInfo(): Promise<Memory> {
   const memoryInfo: Memory = {
     size: os.totalmem(),
     utilization: {

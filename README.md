@@ -15,6 +15,7 @@ const lupSystem = require('lup-system');
 lupSystem.getCpuInfo().then(cpuInfo => console.log("CPU Info: " + cpuInfo));
 lupSystem.getDrives().then(drives => console.log("Drives: " + drives)); // Array of drive objects
 lupSystem.getGPUs().then(gpus => console.log("GPU Info: " + gpus));
+lupSystem.getMemoryInfo().then(memoryInfo => console.log("Memory Info: " + memoryInfo));
 lupSystem.getNetworkInterfaces().then(interfaces => console.log("Network Interfaces: " + interfaces));
 lupSystem.getOSInfo().then(osInfo => console.log("OS Info: " + osInfo));
 lupSystem.getTemperatures().then(temps => console.log("Temperatures: " + temps));
@@ -28,6 +29,7 @@ import lupSystem from 'lup-system';
     console.log("CPU Info: ", await lupSystem.getCpuInfo());
     console.log("Drives: ", await lupSystem.getDrives()); // Array of drive objects
     console.log("GPU Info: ", await lupSystem.getGPUs());
+    console.log("Memory Info: ", await lupSystem.getMemoryInfo());
     console.log("Network Interfaces: ", await lupSystem.getNetworkInterfaces());
     console.log("OS Info: ", await lupSystem.getOSInfo());
     console.log("Temperatures: ", await lupSystem.getTemperatures());
@@ -104,6 +106,41 @@ GPU Info: [
         }
     }
 ]
+Memory Info: {
+    size: 34249633792,
+    utilization: {
+        used: 22930456576,
+        free: 11319177216,
+        percentage: 0.669509540313861
+    },
+    devices: [
+        {
+            manufacturer: 'Kingston',
+            model: 'KF3200C16D4/16GX',
+            size: 17179869184,
+            busWidth: 64,
+            maxClockSpeed: 2400,
+            clockSpeed: 2400,
+            voltage: 1.2,
+            type: 'DDR4',
+            transfersPerClockCycle: 2,
+            bandwidth: 38400000000
+        },
+        {
+            manufacturer: 'Kingston',
+            model: 'KF3200C16D4/16GX',
+            size: 17179869184,
+            busWidth: 64,
+            maxClockSpeed: 2400,
+            clockSpeed: 2400,
+            voltage: 1.2,
+            type: 'DDR4',
+            transfersPerClockCycle: 2,
+            bandwidth: 38400000000
+        }
+    ],
+    bandwidth: 76800000000
+}
 Network Interfaces: [
     {
         name: 'Loopback Pseudo-Interface 1',
