@@ -109,19 +109,21 @@ GPU Info: [
 Memory Info: {
     size: 34249633792,
     utilization: {
-        used: 22930456576,
-        free: 11319177216,
-        percentage: 0.669509540313861
+        used: 22643089408,
+        free: 11606544384,
+        percentage: 0.6611191683249166
     },
     devices: [
         {
             manufacturer: 'Kingston',
             model: 'KF3200C16D4/16GX',
+            bankName: 'BANK 0',
             size: 17179869184,
             busWidth: 64,
             maxClockSpeed: 2400,
             clockSpeed: 2400,
             voltage: 1.2,
+            locator: 'Controller0-ChannelA-DIMM1',
             type: 'DDR4',
             transfersPerClockCycle: 2,
             bandwidth: 38400000000
@@ -129,11 +131,13 @@ Memory Info: {
         {
             manufacturer: 'Kingston',
             model: 'KF3200C16D4/16GX',
+            bankName: 'BANK 1',
             size: 17179869184,
             busWidth: 64,
             maxClockSpeed: 2400,
             clockSpeed: 2400,
             voltage: 1.2,
+            locator: 'Controller0-ChannelB-DIMM1',
             type: 'DDR4',
             transfersPerClockCycle: 2,
             bandwidth: 38400000000

@@ -28,6 +28,12 @@ export type MemoryDevice = {
   /** Memory type (e.g., DDR4, LPDDR4X). */
   type?: string;
 
+  /** Name assigned to slot by the firmware. */
+  locator?: string;
+
+  /** Name of the slot based on motherboard layout (bank locator). */
+  bankName?: string;
+
   /** Configured clock speed in MHz. */
   clockSpeed?: number;
 
@@ -82,11 +88,80 @@ export async function getMemoryInfo(): Promise<Memory> {
       percentage: (os.totalmem() - os.freemem()) / os.totalmem(),
     },
   };
+  const interleavePositions = new Set<number>();
   
   switch(process.platform){
 
+    case 'darwin':
     case 'linux': {
-      // TODO
+      const output = await execCommand(
+        'dmidecode --type memory'
+      ).catch(() => '');
+      const lines = output.split('\n');
+      let currDevice: MemoryDevice | null = null;
+      let ignoreBlock = true;
+      for(let i=0; i < lines.length; i++){
+        const [key, value] = lines[i].split(': ').map(s => s.trim());
+        if(!key || !currDevice){ // empty line marks new device
+          if(currDevice && Object.keys(currDevice).length > 0) {
+            memoryInfo.devices = memoryInfo.devices || [];
+            memoryInfo.devices.push(currDevice as any);
+          }
+          currDevice = {};
+          ignoreBlock = true;
+          continue;
+        }
+        if(!value){
+          ignoreBlock = ignoreBlock || (key === 'Memory Device');
+          continue; // skip lines without value
+        }
+        if(ignoreBlock) continue; // skip block if marked to ignore
+        if(key === 'Total Width' || key === 'Data Width'){
+          const busWidth = parseInt(value.split(' ')[0], 10); // strip unit 'bits'
+          if(!Number.isNaN(busWidth)) currDevice.busWidth = busWidth;
+        } else
+        if(key === 'Size'){
+          const size = parseInt(value.split(' ')[0], 10); // strip unit 'MB'
+          if(!Number.isNaN(size)) currDevice.size = size * 1024 * 1024; // convert MB to bytes
+        } else
+        if(key === 'Locator' || key === 'Socket Designation'){
+          currDevice.locator = value;
+        } else
+        if(key === 'Bank Locator'){
+          currDevice.bankName = value;
+        } else
+        if(key === 'Type'){
+          currDevice.type = value;
+        } else
+        if(key === 'Speed'){
+          const mhz = parseInt(value.split(' ')[0], 10); // strip unit 'MHz'
+          if(!Number.isNaN(mhz)){
+            currDevice.clockSpeed = mhz;
+            currDevice.maxClockSpeed = mhz; // use max speed as default clock speed
+          }
+        } else
+        if(key === 'Configured Memory Speed' || key === 'Configured Clock Speed'){
+          const mhz = parseInt(value.split(' ')[0], 10); // strip unit 'MHz'
+          if(!Number.isNaN(mhz)){
+            currDevice.clockSpeed = mhz;
+            if(!currDevice.maxClockSpeed) currDevice.maxClockSpeed = mhz; // use configured speed as default max speed
+          }
+        } else
+        if(key === 'Manufacturer'){
+          currDevice.manufacturer = value;
+        } else
+        if(key === 'Part Number'){
+          currDevice.model = currDevice.model || value; // use first available model
+        } else
+        if(key === 'Rank'){
+          const rank = parseInt(value, 10);
+          if(!Number.isNaN(rank)) interleavePositions.add(rank);
+        } else
+        if(key === 'Voltage' || key === 'Configured Voltage'){
+          const voltage = parseFloat(value.split(' ')[0]); // strip unit 'V'
+          if(!Number.isNaN(voltage)) currDevice.voltage = voltage; // keep in volts
+        }
+      }
       break;
     }
 
@@ -95,7 +170,6 @@ export async function getMemoryInfo(): Promise<Memory> {
         'powershell -Command "Get-CimInstance -ClassName Win32_PhysicalMemory | Format-List"'
       ).catch(() => '');
       const lines = output.split('\n');
-      const interleavePositions = new Set<number>();
       let currDevice: MemoryDevice | null = null;
       for(let i=0; i < lines.length; i++){
         const [key, value] = lines[i].split(' : ').map(s => s.trim());
@@ -114,6 +188,9 @@ export async function getMemoryInfo(): Promise<Memory> {
         } else
         if(key === 'Model' || key === 'PartNumber'){
           currDevice.model = currDevice.model || value;
+        } else
+        if(key === 'BankLabel'){
+          currDevice.bankName = value;
         } else
         if(key === 'Capacity'){
           const size = parseInt(value, 10);
@@ -134,7 +211,7 @@ export async function getMemoryInfo(): Promise<Memory> {
             if(!currDevice.clockSpeed) currDevice.clockSpeed = mhz; // use max speed as default clock speed
           }
         } else
-        if(key === 'ConfiguredClockSpeed'){ // higher priority than Speed
+        if(key === 'ConfiguredClockSpeed' || key === 'ConfiguredMemorySpeed'){ // higher priority than Speed
           const mhz = parseInt(value, 10);
           if(!Number.isNaN(mhz)){
             currDevice.clockSpeed = mhz;
@@ -144,6 +221,9 @@ export async function getMemoryInfo(): Promise<Memory> {
         if(key === 'ConfiguredVoltage' || key === 'Voltage'){
           const voltage = parseFloat(value);
           if(!Number.isNaN(voltage)) currDevice.voltage = voltage / 1000; // convert from mV to V
+        } else
+        if(key === 'DeviceLocator'){
+          currDevice.locator = value;
         } else
         if(key === 'SMBIOSMemoryType'){
           switch(value){
@@ -185,26 +265,26 @@ export async function getMemoryInfo(): Promise<Memory> {
           }
         }
       }
-
-      // post-processing
-      if(memoryInfo.devices){
-        const parallelism = Math.max(1, interleavePositions.size);
-        let clockSpeed: number | undefined;
-        let busWidth: number | undefined;
-        let transfersPerCycle: number | undefined;
-        for(let device of memoryInfo.devices){
-          if(device.size && device.busWidth && device.clockSpeed){
-            clockSpeed = clockSpeed ? Math.min(clockSpeed, device.clockSpeed) : device.clockSpeed;
-            busWidth = busWidth ? Math.min(busWidth, device.busWidth) : device.busWidth;
-            transfersPerCycle = transfersPerCycle ? Math.min(transfersPerCycle, device.transfersPerClockCycle ?? 1) : device.transfersPerClockCycle;
-            device.bandwidth = device.clockSpeed*1000*1000 * device.busWidth/8 * (transfersPerCycle ??  1);
-          }
-        }
-        if(clockSpeed && busWidth)
-          memoryInfo.bandwidth = clockSpeed*1000*1000 * busWidth/8 * (transfersPerCycle ?? 1) * parallelism; // bytes per second
-      }
       break;
     }
+  }
+
+  // post-processing
+  if(memoryInfo.devices){
+    const parallelism = Math.max(1, interleavePositions.size);
+    let clockSpeed: number | undefined;
+    let busWidth: number | undefined;
+    let transfersPerCycle: number | undefined;
+    for(let device of memoryInfo.devices){
+      if(device.size && device.busWidth && device.clockSpeed){
+        clockSpeed = clockSpeed ? Math.min(clockSpeed, device.clockSpeed) : device.clockSpeed;
+        busWidth = busWidth ? Math.min(busWidth, device.busWidth) : device.busWidth;
+        transfersPerCycle = transfersPerCycle ? Math.min(transfersPerCycle, device.transfersPerClockCycle ?? 1) : device.transfersPerClockCycle;
+        device.bandwidth = device.clockSpeed*1000*1000 * device.busWidth/8 * (transfersPerCycle ??  1);
+      }
+    }
+    if(clockSpeed && busWidth)
+      memoryInfo.bandwidth = clockSpeed*1000*1000 * busWidth/8 * (transfersPerCycle ?? 1) * parallelism; // bytes per second
   }
 
   return memoryInfo;
