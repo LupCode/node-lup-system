@@ -1,1 +1,2 @@
 memory.ts
+ - Keep 'SMBIOSMemoryType' mapping up to date

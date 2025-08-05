@@ -2,6 +2,17 @@ import { execCommand } from './utils';
 import fs from 'fs/promises';
 import os from 'os';
 
+
+export type NICUtilization = {
+
+  /** Current receive link utilization (RX) in percentage (0.0-1.0) of the maximum bandwidth (speed). */
+  receive: number;
+
+  /** Current transmit link utilization (TX) in percentage (0.0-1.0) of the maximum bandwidth (speed). */
+  transmit: number;
+};
+
+
 export type NICInfo = {
   /** Name of the network interface (e.g. lo, eth0). */
   name: string;
@@ -62,13 +73,7 @@ export type NICInfo = {
    *
    * The utilization cannot be determined for all interfaces, in which case it will be undefined.
    */
-  utilization?: {
-    /** Current receive link utilization (RX) in percentage (0.0-1.0) of the maximum bandwidth (speed). */
-    receive: number;
-
-    /** Current transmit link utilization (TX) in percentage (0.0-1.0) of the maximum bandwidth (speed). */
-    transmit: number;
-  };
+  utilization?: NICUtilization;
 };
 
 /** Intervall in milliseconds at which network interface utilization is computed. */

@@ -6,6 +6,19 @@ const VIRTUAL_DRIVE_TYPES = [
   'overlay', // Overlay filesystem
 ];
 
+export type DriveUtilization = {
+
+  /** The total amount of unused drive space in bytes. */
+  free: number;
+
+  /** The amount of drive space used in bytes. */
+  used: number;
+
+  /** The current drive utilization as a percentage (0-1). */
+  percentage: number;
+};
+
+
 export type DriveInfo = {
   /** The device name of the drive (e.g., /dev/sda1) */
   filesystem: string;
@@ -16,18 +29,13 @@ export type DriveInfo = {
   /** The filesystem type (e.g., ext4, ntfs) */
   type: 'btrfs' | 'devtmpfs' | 'ext4' | 'ntfs' | 'overlay' | 'tmpfs' | 'vfat' | 'xfs' | string;
 
-  /** The total amount of unused drive space in bytes. */
-  free: number;
-
-  /** The amount of drive space used in bytes. */
-  used: number;
-
   /** The total size of the drive in bytes. */
   total: number;
 
-  /** The current drive utilization as a percentage (0-1). */
-  utilization: number;
+  /** Usage of the drive. */
+  utilization: DriveUtilization;
 };
+
 
 /**
  * Returns information about the drives on the system (in Windows the logical drives are returned).
@@ -56,10 +64,12 @@ export async function getDrives(includeVirtual: boolean = false): Promise<DriveI
           filesystem: parts[0] as string,
           type,
           total,
-          used,
-          free: parseInt(parts[4], 10) || 0,
-          utilization: total !== 0 ? used / total : 0,
           mount: (parts[6] || parts[0]) as string,
+          utilization: {
+            used,
+            free: parseInt(parts[4], 10) || 0,
+            percentage: total !== 0 ? used / total : 0,
+          }
         });
       }
       break;
@@ -78,9 +88,11 @@ export async function getDrives(includeVirtual: boolean = false): Promise<DriveI
           mount: drive.VolumeName || drive.Caption,
           type: (drive.FileSystem || 'unknown').toLowerCase(),
           total,
-          free,
-          used: total - free,
-          utilization: total !== 0 ? (total - free) / total : 0,
+          utilization: {
+            free,
+            used: total - free,
+            percentage: total !== 0 ? (total - free) / total : 0,
+          }
         });
       }
       break;

@@ -66,18 +66,22 @@ Drives: [
         mount: 'C:',
         type: 'ntfs',
         total: 1999519543296,
-        free: 479322533888,
-        used: 1520197009408,
-        utilization: 0.7602811457907099
+        utilization: {
+            free: 470568960000,
+            used: 1528950583296,
+            percentage: 0.7646589844156682
+        }
     },
     {
         filesystem: 'D:',
         mount: 'D:',
         type: 'ntfs',
         total: 1000203087872,
-        free: 917103894528,
-        used: 83099193344,
-        utilization: 0.08308232033236287
+        utilization: {
+            free: 917100240896,
+            used: 83102846976,
+            percentage: 0.08308597322250519
+        }
     }
 ]
 GPU Info: [
@@ -91,11 +95,13 @@ GPU Info: [
         driverVersion: '32.0.15.7652',
         displayAttached: true,
         displayActive: true,
-        fanSpeed: 0.53,
-        utilization: 0.03,
-        memoryUtilization: 0.01,
-        temperature: 52,
-        powerDraw: 48.32
+        utilization: {
+            fanSpeed: 0.56,
+            processing: 0.01,
+            memory: 0,
+            temperature: 51,
+            powerDraw: 46.65
+        }
     }
 ]
 Network Interfaces: [
@@ -139,3 +145,6 @@ Temperatures: {
 ### GPU Readings
 For more detailed information on GPUs it is recommended to 
 install the [nvidia-smi](https://developer.nvidia.com/nvidia-system-management-interface) tool.
+
+### Docker
+For [Docker](https://www.docker.com/) support, ensure that the Docker daemon is running and accessible.

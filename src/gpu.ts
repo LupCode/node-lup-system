@@ -1,5 +1,27 @@
 import { execCommand } from './utils';
 
+
+export type GPUUtilization = {
+  /** GPU memory utilization as a percentage (0.0-1.0). */
+  memory?: number;
+
+  /** GPU memory temperature in Celsius. */
+  memoryTemperature?: number;
+
+  /** GPU processing utilization as a percentage (0.0-1.0). */
+  processing?: number;
+
+  /** GPU temperature in Celsius. */
+  temperature?: number;
+
+  /** Fan speed in percentage (0.0-1.0). */
+  fanSpeed?: number;
+
+  /** GPU power draw in watts. */
+  powerDraw?: number;
+};
+
+
 export type GPU = {
   /** Unique ID of the GPU device. */
   id: string;
@@ -22,15 +44,6 @@ export type GPU = {
   /** Memory size of the GPU in bytes. */
   memory?: number;
 
-  /** Memory utilization of the GPU in percentage (0.0-1.0) */
-  memoryUtilization?: number;
-
-  /** Temperature of the memory in Celsius. */
-  memoryTemperature?: number;
-
-  /** GPU processing utilization in percentage (0.0-1.0) */
-  utilization?: number;
-
   /** Index of the GPU device. */
   index?: number;
 
@@ -40,14 +53,8 @@ export type GPU = {
   /** If memory is allocated inside the GPU for display purposes. Can be true even if no physical display is attached. */
   displayActive?: boolean;
 
-  /** Fan speed in percentage (0.0-1.0). */
-  fanSpeed?: number;
-
-  /** Temperature of the GPU in Celsius. */
-  temperature?: number;
-
-  /** Power draw of the GPU in watts. */
-  powerDraw?: number;
+  /** Utilization data of the GPU. */
+  utilization?: GPUUtilization;
 };
 
 export async function getGPUs(): Promise<GPU[]> {
@@ -159,17 +166,32 @@ export async function getGPUs(): Promise<GPU[]> {
       }
       if (displayAttached) currGpu.displayAttached = ['yes', 'enabled', '1'].includes(displayAttached.toLowerCase());
       if (displayActive) currGpu.displayActive = ['yes', 'enabled', '1'].includes(displayActive.toLowerCase());
-      if (fanSpeed && !Number.isNaN(parseFloat(fanSpeed))) currGpu.fanSpeed = parseFloat(fanSpeed) / 100;
+      if (fanSpeed && !Number.isNaN(parseFloat(fanSpeed))){
+        if(!currGpu.utilization) currGpu.utilization = {} as GPUUtilization;
+        currGpu.utilization.fanSpeed = parseFloat(fanSpeed) / 100;
+      }
       if (memoryTotal && !Number.isNaN(parseInt(memoryTotal, 10)))
         currGpu.memory = parseInt(memoryTotal, 10) * 1024 * 1024; // convert MiB to bytes
-      if (utilizationGPU && !Number.isNaN(parseFloat(utilizationGPU)))
-        currGpu.utilization = parseFloat(utilizationGPU) / 100;
-      if (utilizationMemory && !Number.isNaN(parseFloat(utilizationMemory)))
-        currGpu.memoryUtilization = parseFloat(utilizationMemory) / 100;
-      if (temperatureGPU && !Number.isNaN(parseFloat(temperatureGPU))) currGpu.temperature = parseFloat(temperatureGPU);
-      if (temperatureMemory && !Number.isNaN(parseFloat(temperatureMemory)))
-        currGpu.memoryTemperature = parseFloat(temperatureMemory);
-      if (powerDraw && !Number.isNaN(parseFloat(powerDraw))) currGpu.powerDraw = parseFloat(powerDraw);
+      if (utilizationGPU && !Number.isNaN(parseFloat(utilizationGPU))){
+        if(!currGpu.utilization) currGpu.utilization = {} as GPUUtilization;
+        currGpu.utilization.processing = parseFloat(utilizationGPU) / 100;
+      }
+      if (utilizationMemory && !Number.isNaN(parseFloat(utilizationMemory))){
+        if(!currGpu.utilization) currGpu.utilization = {} as GPUUtilization;
+        currGpu.utilization.memory = parseFloat(utilizationMemory) / 100;
+      }
+      if (temperatureGPU && !Number.isNaN(parseFloat(temperatureGPU))) {
+        if(!currGpu.utilization) currGpu.utilization = {} as GPUUtilization;
+        currGpu.utilization.temperature = parseFloat(temperatureGPU);
+      }
+      if (temperatureMemory && !Number.isNaN(parseFloat(temperatureMemory))) {
+        if(!currGpu.utilization) currGpu.utilization = {} as GPUUtilization;
+        currGpu.utilization.memoryTemperature = parseFloat(temperatureMemory);
+      }
+      if (powerDraw && !Number.isNaN(parseFloat(powerDraw))) {
+        if(!currGpu.utilization) currGpu.utilization = {} as GPUUtilization;
+        currGpu.utilization.powerDraw = parseFloat(powerDraw);
+      }
       gpus[currIdx] = currGpu;
     }
   }
