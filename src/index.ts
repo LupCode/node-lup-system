@@ -1,5 +1,4 @@
 export * from './cpu';
-export * from './docker';
 export * from './drive';
 export * from './gpu';
 export * from './memory';
@@ -9,7 +8,6 @@ export * from './temperature';
 export * from './utils';
 
 import * as cpu from './cpu';
-import * as docker from './docker';
 import * as drive from './drive';
 import * as gpu from './gpu';
 import * as memory from './memory';
@@ -23,7 +21,6 @@ import * as utils from './utils';
  */
 const lupSystem = {
   ...cpu,
-  ...docker,
   ...drive,
   ...gpu,
   ...memory,

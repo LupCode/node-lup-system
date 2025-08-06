@@ -186,6 +186,3 @@ Temperatures: {
 ### GPU Readings
 For more detailed information on GPUs it is recommended to 
 install the [nvidia-smi](https://developer.nvidia.com/nvidia-system-management-interface) tool.
-
-### Docker
-For [Docker](https://www.docker.com/) support, ensure that the Docker daemon is running and accessible.

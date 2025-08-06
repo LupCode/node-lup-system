@@ -7,7 +7,6 @@ const VIRTUAL_DRIVE_TYPES = [
 ];
 
 export type DriveUtilization = {
-
   /** The total amount of unused drive space in bytes. */
   free: number;
 
@@ -17,7 +16,6 @@ export type DriveUtilization = {
   /** The current drive utilization as a percentage (0-1). */
   percentage: number;
 };
-
 
 export type DriveInfo = {
   /** The device name of the drive (e.g., /dev/sda1) */
@@ -35,7 +33,6 @@ export type DriveInfo = {
   /** Usage of the drive. */
   utilization: DriveUtilization;
 };
-
 
 /**
  * Returns information about the drives on the system (in Windows the logical drives are returned).
@@ -69,7 +66,7 @@ export async function getDrives(includeVirtual: boolean = false): Promise<DriveI
             used,
             free: parseInt(parts[4], 10) || 0,
             percentage: total !== 0 ? used / total : 0,
-          }
+          },
         });
       }
       break;
@@ -92,7 +89,7 @@ export async function getDrives(includeVirtual: boolean = false): Promise<DriveI
             free,
             used: total - free,
             percentage: total !== 0 ? (total - free) / total : 0,
-          }
+          },
         });
       }
       break;
