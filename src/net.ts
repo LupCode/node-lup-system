@@ -1,5 +1,6 @@
 import { execCommand } from './utils';
 import fs from 'fs/promises';
+import net from 'net';
 import os from 'os';
 
 export type NICUtilization = {
@@ -166,6 +167,33 @@ export function stopNetworkUtilizationComputation() {
   NET_COMPUTE_TIMEOUT = null;
   NET_COMPUTE_RUNNING = false;
 }
+
+
+/**
+ * Checks if a process is listening on a given port.
+ * @param port Port number to check.
+ * @param bindAddress Address of the interface to bind to (default '0.0.0.0' which binds to all interfaces).
+ * @returns Promise that resolves to true if the port is in use, false otherwise.
+ */
+export async function checkIfPortIsInUse(port: number, bindAddress: string = '0.0.0.0'): Promise<boolean> {
+  const server = net.createServer();
+  return new Promise((resolve) => {
+    server.unref();
+    server.once('error', (err) => {
+      server.close();
+      if((err as any).code === 'EADDRINUSE') {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    });
+    server.listen(port, bindAddress, () => {
+      server.close();
+      resolve(false);
+    });
+  });
+}
+
 
 /**
  * Returns information about the network interfaces on the system.
