@@ -175,7 +175,7 @@ export function stopNetworkUtilizationComputation() {
  * @param bindAddress Address of the interface to bind to (default '0.0.0.0' which binds to all interfaces).
  * @returns Promise that resolves to true if the port is in use, false otherwise.
  */
-export async function checkIfPortIsInUse(port: number, bindAddress: string = '0.0.0.0'): Promise<boolean> {
+export async function isPortInUse(port: number, bindAddress: string = '0.0.0.0'): Promise<boolean> {
   const server = net.createServer();
   return new Promise((resolve) => {
     server.unref();

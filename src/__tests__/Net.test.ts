@@ -1,4 +1,4 @@
-import { checkIfPortIsInUse, getNetworkInterfaces, stopNetworkUtilizationComputation } from '../net';
+import { isPortInUse, getNetworkInterfaces, stopNetworkUtilizationComputation } from '../net';
 import net from 'net';
 
 test('getNetworkInterfaces', async () => {
@@ -8,11 +8,11 @@ test('getNetworkInterfaces', async () => {
   expect(nics.length).toBeGreaterThan(0);
 }, 10000);
 
-test('checkIfPortIsInUse(12345)', async () => {
+test('isPortInUse(12345)', async () => {
   const port = 12345;
 
   // port should be free
-  const isInUse1 = await checkIfPortIsInUse(port);
+  const isInUse1 = await isPortInUse(port);
   expect(isInUse1).toBe(false);
 
   // start a server
@@ -21,7 +21,7 @@ test('checkIfPortIsInUse(12345)', async () => {
   await new Promise<void>((resolve) => server.listen(port, '0.0.0.0', resolve));
 
   // port should now be in use
-  const isInUse2 = await checkIfPortIsInUse(port);
+  const isInUse2 = await isPortInUse(port);
   expect(isInUse2).toBe(true);
 
   server.close();
