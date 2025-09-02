@@ -224,13 +224,15 @@ export async function isPortListendedOn(port: number, bindAddress: string = '0.0
  * @param bindAddress Address of the interface to bind to (default '0.0.0.0').
  */
 export async function isPortInUse(port: number, bindAddress: string = '0.0.0.0'): Promise<boolean> {
-  let canConn = false;
-  let isListened = false;
-  await Promise.allSettled([
-    canConnect(port, bindAddress).then(res => canConn = res),
-    isPortListendedOn(port, bindAddress).then(res => isListened = res)
-  ])
-  return canConn || isListened;
+  // check first if port can be listened on (way faster if port is really used because just a kernel check needed).
+  const isListenedOn = await isPortListendedOn(port, bindAddress);
+  if(isListenedOn) return true;
+
+  // as backup check if can connect
+  const canConn = await canConnect(port, bindAddress);
+  if(canConn) return true;
+
+  return false;
 }
 
 

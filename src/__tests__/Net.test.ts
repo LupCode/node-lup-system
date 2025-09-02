@@ -1,5 +1,7 @@
-import { isPortInUse, getNetworkInterfaces, stopNetworkUtilizationComputation } from '../net';
+import { start } from 'repl';
+import { isPortInUse, getNetworkInterfaces, stopNetworkUtilizationComputation, canConnect, isPortListendedOn } from '../net';
 import net from 'net';
+
 
 
 test('getNetworkInterfaces', async () => {
@@ -29,22 +31,94 @@ test('isPortInUse(12345)', async () => {
   server.close();
 });
 
+
+
+test('isPortListenedOn not affecting canConnect', async () => {
+  for(let i=0; i < 10; i++){
+
+    const canConn = await canConnect(12345);
+    expect(canConn).toBe(false);
+
+    const isListened = await isPortListendedOn(12345);
+    expect(isListened).toBe(false);
+  }
+});
+
+
+/*
+test('canConnect vs isPortListenedOn', async () => {
+  const iterations = 50;
+  const freePort = 12345;
+  const usedPort = 12346;
+
+
+  // start server
+  const server = net.createServer();
+  server.unref();
+  await new Promise<void>((resolve) => server.listen(usedPort, '0.0.0.0', resolve));
+
+
+  console.log('-----');
+
+
+  // measure canConnect on free port
+  let start = Date.now();
+  for(let i=0; i < iterations; i++){
+    await canConnect(freePort);
+  }
+  const durationConnectFree = Date.now() - start;
+  console.log(`canConnect -> false: took ${durationConnectFree}ms`);
+  
+  // measure isPortListendedOn on free port
+  start = Date.now();
+  for(let i=0; i < iterations; i++){
+    await isPortListendedOn(freePort);
+  }
+  const durationListenFree = Date.now() - start;
+  console.log(`isPortListendedOn -> false: took ${durationListenFree}ms`);
+
+
+  console.log('-----');
+
+
+  // measure canConnect on used port
+  start = Date.now();
+  for(let i=0; i < iterations; i++){
+    await canConnect(usedPort);
+  }
+  const durationConnectUsed = Date.now() - start;
+  console.log(`canConnect -> true: took ${durationConnectUsed}ms`);
+
+  // measure isPortListendedOn on used port
+  start = Date.now();
+  for(let i=0; i < iterations; i++){
+    await isPortListendedOn(usedPort);
+  }
+  const durationListenUsed = Date.now() - start;
+  console.log(`isPortListendedOn -> true: took ${durationListenUsed}ms`);
+
+
+  console.log('-----');
+
+  const durationConnAvg = (durationConnectFree + durationConnectUsed) / 2;
+  const durationListenAvg = (durationListenFree + durationListenUsed) / 2;
+
+  console.log(`canConnect avg: ${durationConnAvg}ms`);
+  console.log(`isPortListendedOn avg: ${durationListenAvg}ms`);
+
+  server.close();
+});
+*/
+
 /*
 test('DEBUG', async () => {
-  const ports = {
-    5050: false,
-    5432: false,
-    6379: false,
-    27017: false,
-  };
+  const ports = [ 5050, 5432, 6379, 27017 ];
+  const addresses = [ '0.0.0.0', '127.0.0.1', '::' ];
 
-  await Promise.allSettled(Object.keys(ports).map(async p => {
-    const inUse1 = await isPortInUse(parseInt(p), '0.0.0.0');
-    const inUse2 = await isPortInUse(parseInt(p), '127.0.0.1');
-    ports[p] = inUse1 || inUse2;
+  await Promise.allSettled(ports.flatMap(p => addresses.map<[number, string]>(a => [p, a])).map(async ([port, addr]) => {
+    const inUse = await isPortInUse(port, addr);
+    console.log(port, addr, inUse); // TODO REMOVE
   }));
-
-  console.log(JSON.stringify(ports, null, '  '));
 });
 */
 
