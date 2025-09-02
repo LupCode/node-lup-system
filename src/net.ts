@@ -170,12 +170,35 @@ export function stopNetworkUtilizationComputation() {
 
 
 /**
+ * Tries to connect to a given server over TCP.
+ *
+ * @param port Port number to connect to.
+ * @param host Hostname or IP address of the server (default '127.0.0.1').
+ * @returns True if the connection was successful, false otherwise.
+ */
+export async function canConnect(port: number, host: string = '127.0.0.1'): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    const socket = net.connect(port, host, () => {
+      socket.end();
+      resolve(true);
+    });
+    socket.on('error', () => {
+      resolve(false);
+    });
+  });
+}
+
+/**
  * Checks if a process is listening on a given port.
+ *
+ * @warning If a Docker proxy is involved multiple processes can bind to the same port.
+ * Use canConnect() as an alternative to check if a port is already being listened on.
+ *
  * @param port Port number to check.
  * @param bindAddress Address of the interface to bind to (default '0.0.0.0' which binds to all interfaces).
  * @returns Promise that resolves to true if the port is in use, false otherwise.
  */
-export async function isPortInUse(port: number, bindAddress: string = '0.0.0.0'): Promise<boolean> {
+export async function isPortListendedOn(port: number, bindAddress: string = '0.0.0.0'): Promise<boolean> {
   const server = net.createServer();
   return new Promise((resolve) => {
     server.unref();
@@ -192,6 +215,22 @@ export async function isPortInUse(port: number, bindAddress: string = '0.0.0.0')
       resolve(false);
     });
   });
+}
+
+
+/**
+ * Uses isPortListenedOn() and canConnect() to determine if a port is in use.
+ * @param port Port number to check.
+ * @param bindAddress Address of the interface to bind to (default '0.0.0.0').
+ */
+export async function isPortInUse(port: number, bindAddress: string = '0.0.0.0'): Promise<boolean> {
+  let canConn = false;
+  let isListened = false;
+  await Promise.allSettled([
+    canConnect(port, bindAddress).then(res => canConn = res),
+    isPortListendedOn(port, bindAddress).then(res => isListened = res)
+  ])
+  return canConn || isListened;
 }
 
 
