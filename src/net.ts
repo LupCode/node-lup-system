@@ -1,4 +1,5 @@
 import { execCommand } from './utils';
+import dgram from 'dgram';
 import fs from 'fs/promises';
 import net from 'net';
 import os from 'os';
@@ -34,19 +35,19 @@ export type NICInfo = {
 
     /** If the address is internal (e.g. loopback). */
     internal: boolean;
+
+    /** If the address is publicly reachable. */
+    public: boolean;
+
+    /** If the address is the primary address for the system. */
+    primary: boolean;
   }[];
 
-  /** Status information about the network interface. */
-  status: {
-    /** Operational status of the interface (e.g. up, down). */
-    operational: 'up' | 'down' | 'dormant' | 'notpresent' | 'lowerlayerdown' | 'testing' | 'unknown';
-
-    /** If the interface is enabled in the settings. */
-    admin: boolean;
-
-    /** If a network cable is plugged into the interface. */
-    cable: boolean;
-  };
+  /**
+   * Checks if the network interface is up, has a speed is defined,
+   * and is either physical or has the primary address.
+   */
+  primary: boolean;
 
   /** If the interface is a physical (e.g. Ethernet) or virtual (e.g. Loopback, VPN, Hyper-V) interface. */
   physical: boolean;
@@ -64,6 +65,18 @@ export type NICInfo = {
 
     /** Speed in bytes per second (Bps). */
     bytes: number;
+  };
+
+  /** Status information about the network interface. */
+  status: {
+    /** Operational status of the interface (e.g. up, down). */
+    operational: 'up' | 'down' | 'dormant' | 'notpresent' | 'lowerlayerdown' | 'testing' | 'unknown';
+
+    /** If the interface is enabled in the settings. */
+    admin: boolean;
+
+    /** If a network cable is plugged into the interface. */
+    cable: boolean;
   };
 
   /**
@@ -168,7 +181,6 @@ export function stopNetworkUtilizationComputation() {
   NET_COMPUTE_RUNNING = false;
 }
 
-
 /**
  * Tries to connect to a given server over TCP.
  *
@@ -189,6 +201,32 @@ export async function canConnect(port: number, host: string = '127.0.0.1'): Prom
 }
 
 /**
+ * Returns the primary IP address that is configured and
+ * which is most likely to also be the public IP.
+ *
+ * @returns Primary IP address.
+ */
+export async function getPrimaryIp(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const socket = dgram.createSocket('udp4');
+    // Destination doesn't need to be reachable – just needs routing
+    socket.connect(80, '8.8.8.8', () => {
+      try {
+        const address = socket.address();
+        socket.close();
+        if (typeof address === 'string') {
+          reject(new Error('Unexpected address format'));
+        } else {
+          resolve(address.address); // local IP used for routing
+        }
+      } catch (err) {
+        reject(err);
+      }
+    });
+  });
+}
+
+/**
  * Checks if a process is listening on a given port.
  *
  * @warning If a Docker proxy is involved multiple processes can bind to the same port.
@@ -204,7 +242,7 @@ export async function isPortListendedOn(port: number, bindAddress: string = '0.0
     server.unref();
     server.once('error', (err) => {
       server.close();
-      if((err as any).code === 'EADDRINUSE') {
+      if ((err as any).code === 'EADDRINUSE') {
         resolve(true);
       } else {
         resolve(false);
@@ -217,7 +255,6 @@ export async function isPortListendedOn(port: number, bindAddress: string = '0.0
   });
 }
 
-
 /**
  * Uses isPortListenedOn() and canConnect() to determine if a port is in use.
  * @param port Port number to check.
@@ -226,15 +263,49 @@ export async function isPortListendedOn(port: number, bindAddress: string = '0.0
 export async function isPortInUse(port: number, bindAddress: string = '0.0.0.0'): Promise<boolean> {
   // check first if port can be listened on (way faster if port is really used because just a kernel check needed).
   const isListenedOn = await isPortListendedOn(port, bindAddress);
-  if(isListenedOn) return true;
+  if (isListenedOn) return true;
 
   // as backup check if can connect
   const canConn = await canConnect(port, bindAddress);
-  if(canConn) return true;
+  if (canConn) return true;
 
   return false;
 }
 
+/**
+ * Checks if the given IPv4 or IPv6 address is a public IP address.
+ * @param ip The IP address to check.
+ * @returns True if the IP address is public, false otherwise.
+ */
+export function isPublicIp(ip: string): boolean {
+  if (!ip) return false;
+
+  const ipv4Parts = ip.split('.');
+  if (ipv4Parts.length === 4) {
+    const [a, b] = ipv4Parts.map(Number);
+    // Check for private IP ranges
+    return !(a === 10 || a === 127 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168));
+  }
+
+  const ipv6Parts = ip.split(':');
+  if (ipv6Parts.length > 2) {
+    const [first, second] = ipv6Parts;
+    // Check for unique IPv6 ranges
+    return !(
+      first === '::1' || // Loopback
+      first === 'fc00' ||
+      first === 'fd00' || // Unique Local Addresses
+      (first === 'fe80' && second === '::') // Link-Local
+    );
+  }
+
+  return false;
+}
+
+export async function getRealNetworkInterfaces(): Promise<NICInfo[]> {
+  const allNics = await getNetworkInterfaces();
+  return allNics.filter((nic) => true);
+}
 
 /**
  * Returns information about the network interfaces on the system.
@@ -246,6 +317,7 @@ export async function getNetworkInterfaces(): Promise<NICInfo[]> {
     await runNetComputeInterval(); // runs the first computation immediately
     await computeNetworkUtilization(); // run second computation immediately to get initial values
   }
+  const primaryIp = await getPrimaryIp();
 
   const nics: { [name: string]: NICInfo } = {};
   for (const [name, addresses] of Object.entries(os.networkInterfaces())) {
@@ -259,7 +331,10 @@ export async function getNetworkInterfaces(): Promise<NICInfo[]> {
           netmask: addr.netmask,
           cidr: addr.cidr,
           internal: addr.internal,
+          public: isPublicIp(addr.address),
+          primary: addr.address === primaryIp,
         })) || [],
+      primary: false,
       status: {
         operational: 'unknown',
         admin: true, // Default to true, will be updated based on platform
@@ -328,6 +403,7 @@ export async function getNetworkInterfaces(): Promise<NICInfo[]> {
               nics[currNic] = {
                 name: currNic,
                 addresses: [],
+                primary: false,
                 status: {
                   operational: 'unknown',
                   admin: true, // Default to true, will be updated based on platform
@@ -370,5 +446,16 @@ export async function getNetworkInterfaces(): Promise<NICInfo[]> {
       break;
     }
   }
+
+  // post process
+  for (const key of Object.keys(nics)) {
+    nics[key].primary =
+      nics[key].status.operational === 'up' &&
+      (nics[key].physical || nics[key].addresses.find((addr) => addr.primary)) &&
+      nics[key].speed
+        ? true
+        : false;
+  }
+
   return Object.values(nics);
 }

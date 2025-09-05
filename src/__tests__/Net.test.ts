@@ -1,16 +1,27 @@
 import { start } from 'repl';
-import { isPortInUse, getNetworkInterfaces, stopNetworkUtilizationComputation, canConnect, isPortListendedOn } from '../net';
+import {
+  isPortInUse,
+  getNetworkInterfaces,
+  stopNetworkUtilizationComputation,
+  canConnect,
+  isPortListendedOn,
+  getPrimaryIp,
+} from '../net';
 import net from 'net';
-
-
 
 test('getNetworkInterfaces', async () => {
   const nics = await getNetworkInterfaces();
-  //console.log(nics); // TODO REMOVE
+  console.log(JSON.stringify(nics, null, 2));
   expect(nics).toBeDefined();
   expect(nics.length).toBeGreaterThan(0);
 }, 10000);
 
+test('getPrimaryIp()', async () => {
+  const ip = await getPrimaryIp();
+  console.log('Primary IP:', ip);
+  expect(ip).toBeDefined();
+  expect(ip).toMatch(/\d+\.\d+\.\d+\.\d+/);
+});
 
 test('isPortInUse(12345)', async () => {
   const port = 12345;
@@ -31,11 +42,8 @@ test('isPortInUse(12345)', async () => {
   server.close();
 });
 
-
-
 test('isPortListenedOn not affecting canConnect', async () => {
-  for(let i=0; i < 10; i++){
-
+  for (let i = 0; i < 10; i++) {
     const canConn = await canConnect(12345);
     expect(canConn).toBe(false);
 
@@ -43,7 +51,6 @@ test('isPortListenedOn not affecting canConnect', async () => {
     expect(isListened).toBe(false);
   }
 });
-
 
 /*
 test('canConnect vs isPortListenedOn', async () => {
