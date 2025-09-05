@@ -1,6 +1,6 @@
 {
   "name": "lup-system",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "NodeJS library to retrieve system information and utilization.",
   "main": "./lib/index",
   "types": "./lib/index.d.ts",

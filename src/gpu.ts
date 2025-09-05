@@ -1,6 +1,20 @@
 import { execCommand } from './utils';
 
 export type GPUUtilization = {
+  clockSpeed: {
+    /** Current frequency of the graphics (shaders) clock in MHz. */
+    graphics?: number;
+
+    /** Current frequency of the memory clock in MHz. */
+    memory?: number;
+
+    /** Current frequency of the streaming multiprocessor clock in MHz. */
+    sm?: number;
+
+    /** Current frequency of the video encoder/decoder clock in MHz. */
+    video?: number;
+  };
+
   /** GPU memory utilization as a percentage (0.0-1.0). */
   memory?: number;
 
@@ -21,6 +35,18 @@ export type GPUUtilization = {
 };
 
 export type GPU = {
+  /** Maximum clock speed of the GPU. */
+  clockMaxSpeed?: {
+    /** Maximum frequency of the graphics (shaders) clock in MHz. */
+    graphics?: number;
+
+    /** Maximum frequency of the memory clock in MHz. */
+    memory?: number;
+
+    /** Maximum frequency of the streaming multiprocessor clock in MHz. */
+    sm?: number;
+  };
+
   /** Unique ID of the GPU device. */
   id: string;
 
@@ -128,7 +154,7 @@ export async function getGPUs(): Promise<GPU[]> {
   // nvidia-smi for more detailed info
   {
     const output = await execCommand(
-      'nvidia-smi --query-gpu=name,display_attached,display_active,fan.speed,memory.total,utilization.gpu,utilization.memory,temperature.gpu,temperature.memory,power.draw --format=csv,nounits,noheader',
+      'nvidia-smi --query-gpu=name,index,display_attached,display_active,fan.speed,memory.total,utilization.gpu,utilization.memory,temperature.gpu,temperature.memory,power.draw,clocks.current.graphics,clocks.current.sm,clocks.current.memory,clocks.current.memory,clocks.max.graphics,clocks.max.sm,clocks.max.memory --format=csv,nounits,noheader',
     ).catch(() => '');
     const lines = output.split('\n').filter((line) => line.trim() !== '');
     const updatedIndexes = new Set<number>();
@@ -136,6 +162,7 @@ export async function getGPUs(): Promise<GPU[]> {
     for (let i = 0; i < lines.length; i++) {
       const [
         name,
+        index,
         displayAttached,
         displayActive,
         fanSpeed,
@@ -145,6 +172,13 @@ export async function getGPUs(): Promise<GPU[]> {
         temperatureGPU,
         temperatureMemory,
         powerDraw,
+        clocksCurrentGraphics,
+        clocksCurrentSM,
+        clocksCurrentMemory,
+        clocksCurrentVideo,
+        clocksMaxGraphics,
+        clocksMaxSM,
+        clocksMaxMemory,
       ] = lines[i].split(',').map((s) => s.trim());
       let currIdx = gpus.length;
       let currGpu: GPU | undefined = undefined;
@@ -162,6 +196,7 @@ export async function getGPUs(): Promise<GPU[]> {
         updatedIndexes.add(gpus.length);
         gpus.push(currGpu);
       }
+      if (index.toString().length > 0) currGpu.index = parseInt(index, 10);
       if (displayAttached) currGpu.displayAttached = ['yes', 'enabled', '1'].includes(displayAttached.toLowerCase());
       if (displayActive) currGpu.displayActive = ['yes', 'enabled', '1'].includes(displayActive.toLowerCase());
       if (fanSpeed && !Number.isNaN(parseFloat(fanSpeed))) {
@@ -189,6 +224,38 @@ export async function getGPUs(): Promise<GPU[]> {
       if (powerDraw && !Number.isNaN(parseFloat(powerDraw))) {
         if (!currGpu.utilization) currGpu.utilization = {} as GPUUtilization;
         currGpu.utilization.powerDraw = parseFloat(powerDraw);
+      }
+      if (clocksCurrentGraphics && !Number.isNaN(parseInt(clocksCurrentGraphics, 10))) {
+        if (!currGpu.utilization) currGpu.utilization = {} as GPUUtilization;
+        if (!currGpu.utilization.clockSpeed) currGpu.utilization.clockSpeed = {};
+        currGpu.utilization.clockSpeed.graphics = parseInt(clocksCurrentGraphics, 10);
+      }
+      if (clocksCurrentMemory && !Number.isNaN(parseInt(clocksCurrentMemory, 10))) {
+        if (!currGpu.utilization) currGpu.utilization = {} as GPUUtilization;
+        if (!currGpu.utilization.clockSpeed) currGpu.utilization.clockSpeed = {};
+        currGpu.utilization.clockSpeed.memory = parseInt(clocksCurrentMemory, 10);
+      }
+      if (clocksCurrentSM && !Number.isNaN(parseInt(clocksCurrentSM, 10))) {
+        if (!currGpu.utilization) currGpu.utilization = {} as GPUUtilization;
+        if (!currGpu.utilization.clockSpeed) currGpu.utilization.clockSpeed = {};
+        currGpu.utilization.clockSpeed.sm = parseInt(clocksCurrentSM, 10);
+      }
+      if (clocksCurrentVideo && !Number.isNaN(parseInt(clocksCurrentVideo, 10))) {
+        if (!currGpu.utilization) currGpu.utilization = {} as GPUUtilization;
+        if (!currGpu.utilization.clockSpeed) currGpu.utilization.clockSpeed = {};
+        currGpu.utilization.clockSpeed.video = parseInt(clocksCurrentVideo, 10);
+      }
+      if (clocksMaxGraphics && !Number.isNaN(parseInt(clocksMaxGraphics, 10))) {
+        if (!currGpu.clockMaxSpeed) currGpu.clockMaxSpeed = {};
+        currGpu.clockMaxSpeed.graphics = parseInt(clocksMaxGraphics, 10);
+      }
+      if (clocksMaxMemory && !Number.isNaN(parseInt(clocksMaxMemory, 10))) {
+        if (!currGpu.clockMaxSpeed) currGpu.clockMaxSpeed = {};
+        currGpu.clockMaxSpeed.memory = parseInt(clocksMaxMemory, 10);
+      }
+      if (clocksMaxSM && !Number.isNaN(parseInt(clocksMaxSM, 10))) {
+        if (!currGpu.clockMaxSpeed) currGpu.clockMaxSpeed = {};
+        currGpu.clockMaxSpeed.sm = parseInt(clocksMaxSM, 10);
       }
       gpus[currIdx] = currGpu;
     }
