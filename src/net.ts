@@ -302,9 +302,14 @@ export function isPublicIp(ip: string): boolean {
   return false;
 }
 
-export async function getRealNetworkInterfaces(): Promise<NICInfo[]> {
+/**
+ * Returns the primary network interfaces on the system.
+ *
+ * @returns List of primary NICInfo objects.
+ */
+export async function getPrimaryNetworkInterfaces(): Promise<NICInfo[]> {
   const allNics = await getNetworkInterfaces();
-  return allNics.filter((nic) => true);
+  return allNics.filter((nic) => nic.primary);
 }
 
 /**
