@@ -186,16 +186,29 @@ export function stopNetworkUtilizationComputation() {
  *
  * @param port Port number to connect to.
  * @param host Hostname or IP address of the server (default '127.0.0.1').
+ * @param timeout Connection timeout in milliseconds (default 3000 ms).
  * @returns True if the connection was successful, false otherwise.
  */
-export async function canConnect(port: number, host: string = '127.0.0.1'): Promise<boolean> {
+export async function canConnect(
+  port: number,
+  host: string = '127.0.0.1',
+  timeout: number | undefined = 3000,
+): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
-    const socket = net.connect(port, host, () => {
+    let resolved = false;
+    const socket = net.connect({ host, port, timeout }, () => {
       socket.end();
-      resolve(true);
+      if (!resolved) resolve(true);
+      resolved = true;
+    });
+    socket.on('timeout', () => {
+      socket.destroy();
+      if (!resolved) resolve(false);
+      resolved = true;
     });
     socket.on('error', () => {
-      resolve(false);
+      if (!resolved) resolve(false);
+      resolved = true;
     });
   });
 }
@@ -259,14 +272,19 @@ export async function isPortListendedOn(port: number, bindAddress: string = '0.0
  * Uses isPortListenedOn() and canConnect() to determine if a port is in use.
  * @param port Port number to check.
  * @param bindAddress Address of the interface to bind to (default '0.0.0.0').
+ * @param timeout Connection timeout in milliseconds (default 100 ms).
  */
-export async function isPortInUse(port: number, bindAddress: string = '0.0.0.0'): Promise<boolean> {
+export async function isPortInUse(
+  port: number,
+  bindAddress: string = '0.0.0.0',
+  timeout: number | undefined = 100,
+): Promise<boolean> {
   // check first if port can be listened on (way faster if port is really used because just a kernel check needed).
   const isListenedOn = await isPortListendedOn(port, bindAddress);
   if (isListenedOn) return true;
 
   // as backup check if can connect
-  const canConn = await canConnect(port, bindAddress);
+  const canConn = await canConnect(port, bindAddress, timeout);
   if (canConn) return true;
 
   return false;
